@@ -34,7 +34,7 @@ class Util {
 
         // If we got this far then all the common indices are identical, so whichever version is
         // longer must be more recent
-        return givenVersions.size() > targetVersions.size()
+        return givenVersions.size() >= targetVersions.size()
     }
 
     /**

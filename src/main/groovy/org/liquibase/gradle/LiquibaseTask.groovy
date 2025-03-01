@@ -42,7 +42,7 @@ class LiquibaseTask extends JavaExec {
     @Input
     def commandArguments
 
-    /** The argument builder that will build the arguments to sent to Liquibase. */
+    /** The argument builder that will build the arguments to send to Liquibase. */
     @Internal
     ArgumentBuilder argumentBuilder
 
