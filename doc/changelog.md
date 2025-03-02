@@ -1,5 +1,13 @@
 Changes for 3.0.1
 =================
+- Fixed a "fingerprinting" issue, with thanks to @averyaube.  Fixes #120. 
+
+- Added support for Liquibase up to version 4.31.1.  Note that using version 4.30+ requires an
+  explicit dependency to `org.apache.commons:commons-lang3:3.14.0` in the `liquibaseRuntime`
+  classpath.
+
+Changes for 3.0.1
+=================
 - Changed the way the plugin initializes.  It now gets everything it needs from Liquibase during the
   apply phase so that we don't need to query Liquibase at execution time.  This works around a bug
   that was related to the fact that Liquibase came from two different jars depending on which phase
