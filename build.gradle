@@ -19,7 +19,6 @@ apply plugin: "com.gradle.plugin-publish"
 apply plugin: "groovy"
 apply plugin: "signing"
 apply plugin: "idea"
-apply plugin: 'java'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -46,11 +45,10 @@ dependencies {
     compileOnly localGroovy()
     compileOnly gradleApi()
     compileOnly "org.codehaus.groovy:groovy:${groovyVersion}"
-    compileOnly "org.liquibase:liquibase-core:${liquibaseCoreVersion}"
-    // implementation "org.liquibase:liquibase-standard:${liquibaseCoreVersion}"
+    implementation "org.liquibase:liquibase-core:${liquibaseCoreVersion}"  // Changed from compileOnly
     testImplementation "org.liquibase:liquibase-core:${liquibaseCoreVersion}"
     testImplementation "junit:junit:${junitVersion}"
-    testImplementation 'org.spockframework:spock-core:2.3-groovy-3.0'
+    testImplementation "org.spockframework:spock-core:${spockVersion}"
     testImplementation gradleTestKit()
 }
 
