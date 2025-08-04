@@ -52,6 +52,10 @@ dependencies {
     testImplementation gradleTestKit()
 }
 
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
 task sourceJar(type: Jar) {
     description = "An archive of the source code for Maven Central"
     classifier = "sources"
