@@ -20,6 +20,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.Classpath
 
 import static org.liquibase.gradle.Util.versionAtLeast
 
@@ -46,6 +47,31 @@ class LiquibaseTask extends JavaExec {
     @Internal
     ArgumentBuilder argumentBuilder
 
+    /** Captured build directory for configuration cache compatibility */
+    @Input
+    def buildDirPath
+
+
+    /** Captured project properties for configuration cache compatibility */
+    @Input
+    def projectProperties = [:]
+
+    /** Captured activities for configuration cache compatibility */
+    @Input
+    def capturedActivities = []
+
+    /** Captured runList for configuration cache compatibility */
+    @Input
+    def capturedRunList
+
+    /** Captured jvmArgs for configuration cache compatibility */
+    @Input
+    def capturedJvmArgs = []
+
+    /** Captured classpath for configuration cache compatibility */
+    @Classpath
+    def capturedClasspath
+
     /** a {@code Provider} that can provide a value for the liquibase version. */
     private Provider<String> liquibaseVersionProvider
 
@@ -56,8 +82,8 @@ class LiquibaseTask extends JavaExec {
     @Override
     void exec() {
 
-        def activities = project.liquibase.activities
-        def runList = project.liquibase.runList
+        def activities = capturedActivities
+        def runList = capturedRunList
 
         if ( activities == null || activities.size() == 0 ) {
             throw new LiquibaseConfigurationException("No activities defined.  Did you forget to add a 'liquibase' block to your build.gradle file?")
@@ -85,10 +111,10 @@ class LiquibaseTask extends JavaExec {
      */
     def runLiquibase(activity) {
 
-        def args = argumentBuilder.buildLiquibaseArgs(activity, commandName, commandArguments)
+        def args = argumentBuilder.buildLiquibaseArgs(activity, commandName, commandArguments, this)
         setArgs(args)
 
-        def classpath = project.configurations.getByName(LiquibasePlugin.LIQUIBASE_RUNTIME_CONFIGURATION)
+        def classpath = capturedClasspath
         if ( classpath == null || classpath.isEmpty() ) {
             throw new LiquibaseConfigurationException("No liquibaseRuntime dependencies were defined.  You must at least add Liquibase itself as a liquibaseRuntime dependency.")
         }
@@ -97,8 +123,8 @@ class LiquibaseTask extends JavaExec {
         systemProperties System.properties
         println "liquibase-plugin: Running the '${activity.name}' activity..."
         project.logger.debug("liquibase-plugin: The ${mainClass.get()} class will be used to run Liquibase")
-        project.logger.debug("liquibase-plugin: Liquibase will be run with the following jvmArgs: ${project.liquibase.jvmArgs}")
-        jvmArgs(project.liquibase.jvmArgs)
+        project.logger.debug("liquibase-plugin: Liquibase will be run with the following jvmArgs: ${capturedJvmArgs}")
+        jvmArgs(capturedJvmArgs)
         project.logger.debug("liquibase-plugin: Running 'liquibase ${args.join(" ")}'")
         super.exec()
     }
@@ -115,7 +141,32 @@ class LiquibaseTask extends JavaExec {
     Task configure(Closure closure) {
         this.liquibaseVersionProvider = createLiquibaseVersionProvider()
         mainClass.set(createMainClassProvider(this.liquibaseVersionProvider))
+        ProjectInfo()
         return super.configure(closure)
+    }
+
+    /**
+     * Capture project information during configuration time for configuration cache compatibility
+     */
+    private void ProjectInfo() {
+        buildDirPath = project.buildDir.absolutePath
+        //still not sure about this part
+        project.properties.findAll { key, value ->
+            if (key.startsWith("liquibase") && !LiquibaseTask.class.isAssignableFrom(value.class)) {
+                return true
+            }
+            return false
+        }.each { key, value ->
+            projectProperties[key] = value
+        }
+        
+        capturedActivities = project.liquibase.activities.toList()
+
+        capturedRunList = project.liquibase.runList
+        
+        capturedJvmArgs = project.liquibase.jvmArgs
+        
+        capturedClasspath = project.configurations.getByName(LiquibasePlugin.LIQUIBASE_RUNTIME_CONFIGURATION)
     }
 
     /**

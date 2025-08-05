@@ -21,6 +21,8 @@ class ConfigurationCacheSpec extends Specification {
 
             dependencies {
                 liquibaseRuntime 'org.liquibase:liquibase-core:4.31.1'
+                liquibaseRuntime 'info.picocli:picocli:4.7.5'
+                liquibaseRuntime 'org.liquibase:liquibase-groovy-dsl:3.0.3'
                 liquibaseRuntime 'com.h2database:h2:2.2.224'
             }
 

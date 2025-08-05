@@ -42,9 +42,6 @@ class ArgumentBuilder {
     // All known Liquibase command arguments, as they can be passed in as properties.
     static Set<String> allCommandProperties = new HashSet<>()
 
-    // The Gradle project, used for logging.
-    def project
-
     /**
      * Initialize the global argument and global properties sets.  This needs to be done at apply
      * time so that we get arguments from the same classpath that was used to create the tasks.
@@ -101,9 +98,10 @@ class ArgumentBuilder {
      * @param activity the activity being run, which contains global and command parameters.
      * @param commandName the name of the liquibase command being run.
      * @param supportedCommandArguments the command arguments supported by the command being run.
+     * @param task the LiquibaseTask instance, used for accessing captured project information.
      * @return the argument string to pass to liquibase when we invoke it.
      */
-    def buildLiquibaseArgs(Activity activity, commandName, supportedCommandArguments) {
+    def buildLiquibaseArgs(Activity activity, commandName, supportedCommandArguments, task) {
         // This is what we'll ultimately return.
         def liquibaseArgs = []
 
@@ -120,7 +118,7 @@ class ArgumentBuilder {
         // Create a merged map of activity arguments and arguments given as Gradle properties, then
         // process each of the arguments from the map, figuring out what kind of argument each one
         // is and responding accordingly.
-        createArgumentMap(activity.arguments, project).each {
+        createArgumentMap(activity.arguments, task).each {
             def argumentName = it.key
             if ( allGlobalArguments.contains(argumentName) ) {
                 // We're dealing with global arg.
@@ -153,7 +151,7 @@ class ArgumentBuilder {
         // command arguments, add it here.  The db-doc command is the only one that has a default
         // value.
         if ( commandName == "dbDoc" && !commandArguments.any {it.startsWith("--output-directory") } ) {
-            commandArguments += "--output-directory=${project.buildDir}/database/docs"
+            commandArguments += "--output-directory=${task.buildDirPath}/database/docs"
         }
 
         // Now build our final argument array in the following order:
@@ -165,7 +163,7 @@ class ArgumentBuilder {
         // to put the -D arguments after the command.  If we put them before the command, they are
         // ignored
         if ( sendingChangelog ) {
-            def changelogParamMap = createChangelogParamMap(activity)
+            def changelogParamMap = createChangelogParamMap(activity, task)
             changelogParamMap.each { liquibaseArgs += "-D${it.key}=${it.value}" }
 
         }
@@ -204,7 +202,7 @@ class ArgumentBuilder {
      * @param project the project, from which we'll get the extra arguments.
      * @return a map of argument names and their values.
      */
-    private createArgumentMap(arguments, project) {
+    private createArgumentMap(arguments, task) {
         def argumentMap = [:]
         // Start with the activity's arguments
         arguments.each {
@@ -217,7 +215,7 @@ class ArgumentBuilder {
 
         // Now go through all of the project properties that start with "liquibase" and use them
         // to override/add to the arguments, ignoring the ones Liquibase won't recognize.
-        project.properties.findAll {
+        task.projectProperties.findAll {
             if ( !allGlobalProperties.contains(it.key) && !allCommandProperties.contains(it.key) ) {
                 return false
             }
@@ -252,7 +250,7 @@ class ArgumentBuilder {
      * @param project the project, from which we'll get the extra arguments.
      * @return a map of argument names and their values.
      */
-    private createChangelogParamMap(activity) {
+    private createChangelogParamMap(activity, task) {
         def changelogParameters = [:]
 
         // Start by adding parameters from the activity
@@ -265,7 +263,7 @@ class ArgumentBuilder {
         if ( !project.hasProperty("liquibaseChangelogParameters") ) {
             return changelogParameters
         }
-        project.properties.get("liquibaseChangelogParameters").split(",").each {
+        task.projectProperties.get("liquibaseChangelogParameters").split(",").each {
             def (key, value) = it.split("=")
             project.logger.trace("liquibase-plugin:    Adding property changelogParameter ${key}=${value}")
             changelogParameters.put(key, value)
