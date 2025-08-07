@@ -1,5 +1,8 @@
 package org.liquibase.gradle
 
+import spock.lang.TempDir
+import spock.lang.Specification
+import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.GradleRunner
 import spock.lang.Specification
 
@@ -29,7 +32,7 @@ class ConfigurationCacheSpec extends Specification {
             liquibase {
                 activities {
                     main {
-                        changelogFile 'changelog.groovy'
+                        changelogFile 'src/main/db/changelog.yml'
                         url 'jdbc:h2:mem:testdb'
                         username 'sa'
                         password '1234'
@@ -39,14 +42,26 @@ class ConfigurationCacheSpec extends Specification {
             }
         """
 
-        new File(testProjectDir, "changelog.groovy").text = """
-            databaseChangeLog {
-                changeSet(id: '1', author: 'test') {
-                    createTable(tableName: 'person') {
-                        column(name: 'id', type: 'int')
-                    }
-                }
-            }
+        def sourceDir = new File(testProjectDir, "src/main/db")
+        sourceDir.mkdirs()
+
+        def changelogFile = new File(sourceDir, "changelog.yml")
+        changelogFile.text = """
+            databaseChangeLog:
+              - changeSet:
+                  id: 1
+                  author: your.name
+                  changes:
+                    - createTable:
+                        tableName: person
+                        columns:
+                          - column:
+                              name: id
+                              type: int
+                              autoIncrement: true
+                              constraints:
+                                primaryKey: true
+                                nullable: false
         """
 
         when:
@@ -62,5 +77,3 @@ class ConfigurationCacheSpec extends Specification {
         result.output.contains("Configuration cache entry stored.")
     }
 }
-
-
