@@ -67,6 +67,10 @@ class LiquibaseTask extends JavaExec {
     @Classpath
     def capturedClasspath
 
+    /** Captured logger for configuration cache compatibility */
+    @Internal
+    def capturedLogger
+
     /** Captured project properties for configuration cache compatibility */
     @Input
     def capturedLiquibaseProperties = [:]
@@ -166,6 +170,8 @@ class LiquibaseTask extends JavaExec {
         
         capturedClasspath = project.configurations.getByName(LiquibasePlugin.LIQUIBASE_RUNTIME_CONFIGURATION)
         
+        capturedLogger = project.logger
+        
         // Capture ArgumentBuilder properties
         if (argumentBuilder != null) {
             capturedGlobalProperties = new ArrayList<>(argumentBuilder.allGlobalProperties)
@@ -201,7 +207,8 @@ class LiquibaseTask extends JavaExec {
             capturedLiquibaseProperties,
             capturedGlobalProperties as Set,
             capturedCommandProperties as Set,
-            buildDirPath
+            buildDirPath,
+            capturedLogger
         )
     }
 
