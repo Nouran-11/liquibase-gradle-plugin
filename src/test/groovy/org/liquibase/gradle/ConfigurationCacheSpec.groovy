@@ -32,7 +32,7 @@ class ConfigurationCacheSpec extends Specification {
                         changelogFile 'changelog.groovy'
                         url 'jdbc:h2:mem:testdb'
                         username 'sa'
-                        password ''
+                        password '1234'
                     }
                 }
                 runList = 'main'
