@@ -51,11 +51,6 @@ class LiquibaseTask extends JavaExec {
     @Input
     def buildDirPath
 
-
-    /** Captured project properties for configuration cache compatibility */
-    @Input
-    def projectProperties = [:]
-
     /** Captured activities for configuration cache compatibility */
     @Input
     def capturedActivities = []
@@ -71,6 +66,18 @@ class LiquibaseTask extends JavaExec {
     /** Captured classpath for configuration cache compatibility */
     @Classpath
     def capturedClasspath
+
+    /** Captured project properties for configuration cache compatibility */
+    @Input
+    def capturedLiquibaseProperties = [:]
+
+    /** Captured global properties for configuration cache compatibility */
+    @Input
+    def capturedGlobalProperties = []
+
+    /** Captured command properties for configuration cache compatibility */
+    @Input  
+    def capturedCommandProperties = []
 
     /** a {@code Provider} that can provide a value for the liquibase version. */
     private Provider<String> liquibaseVersionProvider
@@ -111,7 +118,7 @@ class LiquibaseTask extends JavaExec {
      */
     def runLiquibase(activity) {
 
-        def args = argumentBuilder.buildLiquibaseArgs(activity, commandName, commandArguments, this)
+        def args = argumentBuilder.buildLiquibaseArgs(activity, commandName, commandArguments, createPropertyProvider())
         setArgs(args)
 
         def classpath = capturedClasspath
@@ -122,10 +129,10 @@ class LiquibaseTask extends JavaExec {
         // "inherit" the system properties from the Gradle JVM.
         systemProperties System.properties
         println "liquibase-plugin: Running the '${activity.name}' activity..."
-        project.logger.debug("liquibase-plugin: The ${mainClass.get()} class will be used to run Liquibase")
-        project.logger.debug("liquibase-plugin: Liquibase will be run with the following jvmArgs: ${capturedJvmArgs}")
+        logger.debug("liquibase-plugin: The ${mainClass.get()} class will be used to run Liquibase")
+        logger.debug("liquibase-plugin: Liquibase will be run with the following jvmArgs: ${capturedJvmArgs}")
         jvmArgs(capturedJvmArgs)
-        project.logger.debug("liquibase-plugin: Running 'liquibase ${args.join(" ")}'")
+        logger.debug("liquibase-plugin: Running 'liquibase ${args.join(" ")}'")
         super.exec()
     }
 
@@ -141,24 +148,15 @@ class LiquibaseTask extends JavaExec {
     Task configure(Closure closure) {
         this.liquibaseVersionProvider = createLiquibaseVersionProvider()
         mainClass.set(createMainClassProvider(this.liquibaseVersionProvider))
-        ProjectInfo()
+        captureProjectState()
         return super.configure(closure)
     }
 
     /**
      * Capture project information during configuration time for configuration cache compatibility
      */
-    private void ProjectInfo() {
+    private void captureProjectState() {
         buildDirPath = project.buildDir.absolutePath
-        //still not sure about this part
-        project.properties.findAll { key, value ->
-            if (key.startsWith("liquibase") && !LiquibaseTask.class.isAssignableFrom(value.class)) {
-                return true
-            }
-            return false
-        }.each { key, value ->
-            projectProperties[key] = value
-        }
         
         capturedActivities = project.liquibase.activities.toList()
 
@@ -167,6 +165,44 @@ class LiquibaseTask extends JavaExec {
         capturedJvmArgs = project.liquibase.jvmArgs
         
         capturedClasspath = project.configurations.getByName(LiquibasePlugin.LIQUIBASE_RUNTIME_CONFIGURATION)
+        
+        // Capture ArgumentBuilder properties
+        if (argumentBuilder != null) {
+            capturedGlobalProperties = new ArrayList<>(argumentBuilder.allGlobalProperties)
+            capturedCommandProperties = new ArrayList<>(argumentBuilder.allCommandProperties)
+            
+            // Capture relevant Liquibase properties
+            capturedLiquibaseProperties = [:]
+            project.properties.findAll { key, value ->
+                // Only include properties that start with "liquibase" and are recognized
+                if (!key.startsWith("liquibase")) {
+                    return false
+                }
+                
+                // Exclude LiquibaseTask instances (they're not property values)
+                if (value != null && LiquibaseTask.class.isAssignableFrom(value.class)) {
+                    return false
+                }
+                
+                // Only include properties that Liquibase recognizes
+                return argumentBuilder.allGlobalProperties.contains(key) || argumentBuilder.allCommandProperties.contains(key)
+            }.each { key, value ->
+                capturedLiquibaseProperties[key] = value
+            }
+        }
+    }
+    
+    /**
+     * Create a PropertyProvider for accessing Liquibase-related properties using captured values.
+     * This method creates the PropertyProvider using captured state instead of accessing the project directly.
+     */
+    private PropertyProvider createPropertyProvider() {
+        return new PropertyProvider(
+            capturedLiquibaseProperties,
+            capturedGlobalProperties as Set,
+            capturedCommandProperties as Set,
+            buildDirPath
+        )
     }
 
     /**
