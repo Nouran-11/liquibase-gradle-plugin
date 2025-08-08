@@ -1,17 +1,16 @@
 package org.liquibase.gradle
 
+import org.gradle.testkit.runner.GradleRunner
+import spock.lang.Specification
 import spock.lang.TempDir
-import spock.lang.Specification
-import org.gradle.testkit.runner.GradleRunner
-import org.gradle.testkit.runner.GradleRunner
-import spock.lang.Specification
-
 
 class ConfigurationCacheSpec extends Specification {
+    @TempDir
+    File testProjectDir
 
     def "plugin should be compatible with configuration cache"() {
         given:
-        def testProjectDir = File.createTempDir()
+        def changelogFile = new File(testProjectDir, "changelog.yml")
         def buildFile = new File(testProjectDir, "build.gradle")
         buildFile.text = """
             plugins {
@@ -23,29 +22,25 @@ class ConfigurationCacheSpec extends Specification {
             }
 
             dependencies {
-                liquibaseRuntime 'org.liquibase:liquibase-core:4.31.1'
+                liquibaseRuntime 'org.liquibase:liquibase-core:4.26.0'
                 liquibaseRuntime 'info.picocli:picocli:4.7.5'
-                liquibaseRuntime 'org.liquibase:liquibase-groovy-dsl:3.0.3'
                 liquibaseRuntime 'com.h2database:h2:2.2.224'
             }
 
             liquibase {
                 activities {
                     main {
-                        changelogFile 'src/main/db/changelog.yml'
+                        changelogFile 'changelog.yml'
                         url 'jdbc:h2:mem:testdb'
                         username 'sa'
                         password '1234'
+                        searchPath '${testProjectDir}'
                     }
                 }
                 runList = 'main'
             }
         """
 
-        def sourceDir = new File(testProjectDir, "src/main/db")
-        sourceDir.mkdirs()
-
-        def changelogFile = new File(sourceDir, "changelog.yml")
         changelogFile.text = """
             databaseChangeLog:
               - changeSet:
