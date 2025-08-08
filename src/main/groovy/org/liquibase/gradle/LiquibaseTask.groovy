@@ -122,7 +122,7 @@ class LiquibaseTask extends JavaExec {
      */
     def runLiquibase(activity) {
 
-        def args = argumentBuilder.buildLiquibaseArgs(activity, commandName, commandArguments, createPropertyProvider())
+        def args = argumentBuilder.buildLiquibaseArgs(activity, commandName, commandArguments, projectInfo())
         setArgs(args)
 
         def classpath = capturedClasspath
@@ -198,18 +198,9 @@ class LiquibaseTask extends JavaExec {
         }
     }
     
-    /**
-     * Create a PropertyProvider for accessing Liquibase-related properties using captured values.
-     * This method creates the PropertyProvider using captured state instead of accessing the project directly.
-     */
-    private PropertyProvider createPropertyProvider() {
-        return new PropertyProvider(
-            capturedLiquibaseProperties,
-            capturedGlobalProperties as Set,
-            capturedCommandProperties as Set,
-            buildDirPath,
-            capturedLogger
-        )
+
+    private ProjectInfo projectInfo() {
+        return new ProjectInfo(capturedLiquibaseProperties, buildDirPath, capturedLogger)
     }
 
     /**
