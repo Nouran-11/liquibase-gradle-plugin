@@ -214,7 +214,7 @@ class ArgumentBuilder {
 
         // Now go through all of the project properties that start with "liquibase" and use them
         // to override/add to the arguments, ignoring the ones Liquibase won't recognize.
-        def liquibaseProperties = projectInfo.getLiquibaseProperties().get()
+        def liquibaseProperties = projectInfo.getLiquibaseProperties()
         liquibaseProperties.each {
             def argName = it.key - "liquibase"
             argName = argName.uncapitalize()
@@ -250,7 +250,7 @@ class ArgumentBuilder {
         }
 
         // Override/add to the map with project properties
-        def changelogParamProperties = projectInfo.getChangelogParameters().get()
+        def changelogParamProperties = projectInfo.getChangelogParameters()
         changelogParamProperties.each { key, value ->
             projectInfo.logger.trace("liquibase-plugin:    Adding property changelogParameter ${key}=${value}")
             changelogParameters.put(key, value)

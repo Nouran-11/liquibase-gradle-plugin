@@ -1,26 +1,59 @@
 package org.liquibase.gradle
 
-import org.gradle.api.provider.Provider
+import org.gradle.api.Project
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 
-class ProjectInfo{
-    private final Map<String, Object> capturedLiquibaseProperties
-    private final String buildDirPath
-    private final Object capturedLogger
+class ProjectInfo {
+    @Internal
+    List<Activity> activities
+    @Internal
+    String runList
+    @Internal
+    List<String> jvmArgs
+    @Internal
+    Map<String, Object> liquibaseProperties
+    @Internal
+    String buildDirPath
+    @Internal
+    Object logger
 
-    ProjectInfo(Map<String, Object> capturedLiquibaseProperties, String buildDirPath, Object capturedLogger) {
-        this.capturedLiquibaseProperties = capturedLiquibaseProperties ?: [:]
+    ProjectInfo(List<Activity> activities, String runList, List<String> jvmArgs, Map<String, Object> liquibaseProperties, String buildDirPath, Object logger) {
+        this.activities = activities
+        this.runList = runList
+        this.jvmArgs = jvmArgs
+        this.liquibaseProperties = liquibaseProperties
         this.buildDirPath = buildDirPath
-        this.capturedLogger = capturedLogger
+        this.logger = logger
     }
 
-    Provider<Map<String, Object>> getLiquibaseProperties() {
-        return { capturedLiquibaseProperties } as Provider
+    static ProjectInfo fromProject(Project project, ArgumentBuilder argumentBuilder) {
+        def activities = project.liquibase.activities.toList()
+        def runList = project.liquibase.runList
+        def jvmArgs = project.liquibase.jvmArgs
+        def buildDirPath = project.buildDir.absolutePath
+        def logger = project.logger
+        def liquibaseProperties = [:]
+        if (argumentBuilder != null) {
+            project.properties.findAll { key, value ->
+                if (!key.startsWith("liquibase")) return false
+                if (value != null && LiquibaseTask.class.isAssignableFrom(value.class)) return false
+                return argumentBuilder.allGlobalProperties.contains(key) ||
+                        argumentBuilder.allCommandProperties.contains(key)
+            }.each { key, value ->
+                liquibaseProperties[key] = value
+            }
+        }
+
+        return new ProjectInfo(activities, runList, jvmArgs,
+                liquibaseProperties as Map<String, Object>, buildDirPath, logger)
     }
 
-    Provider<Map<String, String>> getChangelogParameters() {
+    @Internal
+    Map<String, String> getChangelogParameters() {
         def changelogParameters = [:]
-        if (capturedLiquibaseProperties.containsKey("liquibaseChangelogParameters")) {
-            def paramString = capturedLiquibaseProperties.get("liquibaseChangelogParameters")
+        if (liquibaseProperties.containsKey("liquibaseChangelogParameters")) {
+            def paramString = liquibaseProperties.get("liquibaseChangelogParameters")
             if (paramString instanceof String) {
                 paramString.split(",").each { param ->
                     def parts = param.split("=", 2)
@@ -30,15 +63,6 @@ class ProjectInfo{
                 }
             }
         }
-        return { changelogParameters } as Provider
+        return changelogParameters as Map<String, String>
     }
-
-
-    def getLogger() {
-        return capturedLogger
-    }
-
-    def getBuildDir() {
-        return buildDirPath
-    }
-} 
+}
