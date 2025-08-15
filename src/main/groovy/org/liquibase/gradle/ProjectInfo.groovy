@@ -1,7 +1,6 @@
 package org.liquibase.gradle
 
 import org.gradle.api.Project
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 
 class ProjectInfo {
@@ -21,22 +20,20 @@ class ProjectInfo {
         this.logger = logger
     }
 
-    static ProjectInfo fromProject(Project project, ArgumentBuilder argumentBuilder) {
+    static ProjectInfo fromProject(Project project) {
         def activities = project.liquibase.activities.toList()
         def runList = project.liquibase.runList
         def jvmArgs = project.liquibase.jvmArgs
         def buildDirPath = project.buildDir.absolutePath
         def logger = project.logger
         def liquibaseProperties = [:]
-        if (argumentBuilder != null) {
-            project.properties.findAll { key, value ->
-                if (!key.startsWith("liquibase")) return false
-                if (value != null && LiquibaseTask.class.isAssignableFrom(value.class)) return false
-                return argumentBuilder.allGlobalProperties.contains(key) ||
-                        argumentBuilder.allCommandProperties.contains(key)
-            }.each { key, value ->
-                liquibaseProperties[key] = value
-            }
+        project.properties.findAll { key, value ->
+            if (!key.startsWith("liquibase")) return false
+            if (value != null && LiquibaseTask.class.isAssignableFrom(value.class)) return false
+            return ArgumentBuilder.allGlobalProperties.contains(key) ||
+                    ArgumentBuilder.allCommandProperties.contains(key)
+        }.each { key, value ->
+            liquibaseProperties[key] = value
         }
 
         return new ProjectInfo(activities, runList, jvmArgs,

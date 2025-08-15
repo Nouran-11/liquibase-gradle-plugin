@@ -199,7 +199,7 @@ class ArgumentBuilder {
      * itself.
      *
      * @param arguments the arguments from the activity
-     * @param project the project, from which we'll get the extra arguments.
+     * @param projectInfo the project information, from which we'll get the extra arguments.
      * @return a map of argument names and their values.
      */
     private createArgumentMap(arguments, ProjectInfo projectInfo) {
@@ -213,7 +213,7 @@ class ArgumentBuilder {
             }
         }
 
-        // Now go through all of the project properties that start with "liquibase" and use them
+        // Now go through all of the Gradle properties that start with "liquibase" and use them
         // to override/add to the arguments, ignoring the ones Liquibase won't recognize.
         def liquibaseProperties = projectInfo.getLiquibaseProperties()
         liquibaseProperties.each {
@@ -238,7 +238,7 @@ class ArgumentBuilder {
      * in the activity.
      *
      * @param arguments the arguments from the activity
-     * @param project the project, from which we'll get the extra arguments.
+     * @param projectInfo the project information, from which we'll get the extra arguments.
      * @return a map of argument names and their values.
      */
     private createChangelogParamMap(activity, ProjectInfo projectInfo) {
@@ -250,7 +250,7 @@ class ArgumentBuilder {
             changelogParameters.put(it.key, it.value)
         }
 
-        // Override/add to the map with project properties
+        // Override/add to the map with Gradle properties
         def changelogParamProperties = projectInfo.getChangelogParameters()
         changelogParamProperties.each { key, value ->
             projectInfo.logger.trace("liquibase-plugin:    Adding property changelogParameter ${key}=${value}")

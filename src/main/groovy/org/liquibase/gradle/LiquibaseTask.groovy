@@ -127,9 +127,8 @@ class LiquibaseTask extends JavaExec {
         this.liquibaseVersionProvider = createLiquibaseVersionProvider()
         mainClass.set(createMainClassProvider(this.liquibaseVersionProvider))
         def configProject = project
-        def configArgumentBuilder = argumentBuilder
         projectInfo.set(project.provider {
-             ProjectInfo.fromProject(configProject, configArgumentBuilder)
+             ProjectInfo.fromProject(configProject)
         })
         return super.configure(closure)
     }
