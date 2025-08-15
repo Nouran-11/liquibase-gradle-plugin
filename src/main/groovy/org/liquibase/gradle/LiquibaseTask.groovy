@@ -129,7 +129,7 @@ class LiquibaseTask extends JavaExec {
         def configProject = project
         def configArgumentBuilder = argumentBuilder
         projectInfo.set(project.provider {
-            return ProjectInfo.fromProject(configProject, configArgumentBuilder)
+             ProjectInfo.fromProject(configProject, configArgumentBuilder)
         })
         return super.configure(closure)
     }

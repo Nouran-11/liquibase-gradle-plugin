@@ -98,6 +98,7 @@ class ArgumentBuilder {
      * @param activity the activity being run, which contains global and command parameters.
      * @param commandName the name of the liquibase command being run.
      * @param supportedCommandArguments the command arguments supported by the command being run.
+     * @param projectInfo the project information containing liquibase properties and other project metadata.
      * @return the argument string to pass to liquibase when we invoke it.
      */
     def buildLiquibaseArgs(Activity activity, commandName, supportedCommandArguments, ProjectInfo projectInfo) {
