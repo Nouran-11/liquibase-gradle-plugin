@@ -45,10 +45,15 @@ dependencies {
     compileOnly localGroovy()
     compileOnly gradleApi()
     compileOnly "org.codehaus.groovy:groovy:${groovyVersion}"
-    compileOnly "org.liquibase:liquibase-core:${liquibaseCoreVersion}"
-    // implementation "org.liquibase:liquibase-standard:${liquibaseCoreVersion}"
+    implementation "org.liquibase:liquibase-core:${liquibaseCoreVersion}"  // Changed from compileOnly
     testImplementation "org.liquibase:liquibase-core:${liquibaseCoreVersion}"
     testImplementation "junit:junit:${junitVersion}"
+    testImplementation "org.spockframework:spock-core:${spockVersion}"
+    testImplementation gradleTestKit()
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }
 
 task sourceJar(type: Jar) {

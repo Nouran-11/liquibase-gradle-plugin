@@ -57,7 +57,7 @@ class LiquibasePlugin implements Plugin<Project> {
     void applyTasks(Project project) {
         // Make an argument builder for tasks to share, and initialize the global arguments while
         // we are still in the apply phase.
-        ArgumentBuilder builder = new ArgumentBuilder(project: project)
+        ArgumentBuilder builder = new ArgumentBuilder()
         builder.initializeGlobalArguments()
 
         // Get the commands from the CommandFactory that are not internal, not hidden, and not the
