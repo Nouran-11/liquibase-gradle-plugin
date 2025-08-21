@@ -28,9 +28,9 @@ class ProjectInfo {
             if (!key.startsWith("liquibase")) return false
             if (value != null && LiquibaseTask.class.isAssignableFrom(value.class)) return false
 
-            //XXX: @Nouran Atef - this ends up ignoring `liquibaseChangelogParameters`
             def supported = ArgumentBuilder.allGlobalProperties.contains(key) ||
-                    ArgumentBuilder.allCommandProperties.contains(key)
+                    ArgumentBuilder.allCommandProperties.contains(key) ||
+                    key == "liquibaseChangelogParameters"
             if (!supported) {
                 println("Skipping unsupported: $key")
             }
