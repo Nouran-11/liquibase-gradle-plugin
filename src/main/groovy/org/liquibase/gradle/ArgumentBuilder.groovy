@@ -219,6 +219,9 @@ class ArgumentBuilder {
         liquibaseProperties.each {
             def argName = it.key - "liquibase"
             argName = argName.uncapitalize()
+            if (argName == "changelogParameters") {
+                return
+            }
             projectInfo.logger.trace("liquibase-plugin:    Setting ${argName}=${it.value} from the command line")
             argumentMap.put(argName, it.value)
         }

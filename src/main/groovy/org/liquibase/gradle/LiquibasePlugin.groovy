@@ -35,9 +35,14 @@ class LiquibasePlugin implements Plugin<Project> {
 
 
     void applyExtension(Project project) {
-        def activities = project.container(Activity) { name ->
+        def activityClosure = { name ->
             new Activity(name)
         }
+        doApplyExtension(project, activityClosure)
+    }
+
+    protected static void doApplyExtension(Project project, Closure<Activity> activityClosure) {
+        def activities = project.container(Activity, activityClosure)
         project.configure(project) {
             extensions.create("liquibase", LiquibaseExtension, activities)
         }
