@@ -46,7 +46,7 @@ dependencies {
     compileOnly gradleApi()
     compileOnly "org.codehaus.groovy:groovy:${groovyVersion}"
     compileOnly "org.liquibase:liquibase-core:${liquibaseCoreVersion}"
-    // implementation "org.liquibase:liquibase-standard:${liquibaseCoreVersion}"
+    implementation "org.liquibase:liquibase-core:${liquibaseCoreVersion}"
     testImplementation "org.liquibase:liquibase-core:${liquibaseCoreVersion}"
     testImplementation "junit:junit:${junitVersion}"
     testImplementation gradleTestKit()
